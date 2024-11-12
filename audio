@@ -1,0 +1,46 @@
+import RPi.GPIO as GPIO
+import speech_recognition as sr
+import time
+
+# GPIO setup
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(18, GPIO.OUT)
+
+def setup_gpio():
+    GPIO.output(18, GPIO.LOW)  # Start with the light OFF
+
+def listen_for_command():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening for 'ON' or 'OFF' command...")
+        audio = recognizer.listen(source)
+        
+        try:
+            command = recognizer.recognize_google(audio).lower()
+            print(f"Command received: {command}")
+            return command
+        except sr.UnknownValueError:
+            print("Sorry, I could not understand the audio.")
+        except sr.RequestError:
+            print("Could not request results; check your network connection.")
+        return None
+
+def control_light(command):
+    if command == "light on":
+        GPIO.output(18, GPIO.HIGH)
+        print("light is on")
+    elif command == "light off":
+        GPIO.output(18, GPIO.LOW)
+        print("light is off")
+
+try:
+    setup_gpio()
+    while True:
+        command = listen_for_command()
+        if command:
+            control_light(command)
+        time.sleep(1)  # Delay between checks
+except KeyboardInterrupt:
+    print("Exiting...")
+finally:
+    GPIO.cleanup()
